@@ -1,6 +1,13 @@
 class Vertex:
+    ID_POINT = 0
+
     def __init__(self):
         self._links = []
+        Vertex.ID_POINT += 1
+        self._id = Vertex.ID_POINT
+
+    def get_id(self):
+        return self._id
 
     @property
     def links(self):
@@ -25,7 +32,7 @@ class LinkedGraph:
 
     def add_vertex(self, v):
         if v not in self._vertex:
-            self._vertex.append(v)
+            self._vertex.append(v.link)
 
     def add_link(self, link):
         if link not in self._links:
@@ -72,6 +79,7 @@ map_graph.add_link(Link(v2, v7))
 map_graph.add_link(Link(v3, v4))
 map_graph.add_link(Link(v5, v6))
 
+
 print(len(map_graph._links))   # 8 связей
 print(len(map_graph._vertex))  # 7 вершин
 path = map_graph.find_path(v1, v6)
@@ -112,7 +120,6 @@ print(v1.links)
 # path = map_metro.find_path(v1, v6)  # от сретенского бульвара до китай-город 1
 # print(path[0])    # [Сретенский бульвар, Тургеневская, Китай-город 2, Китай-город 1]
 # print(sum([x.dist for x in path[1]]))  # 7
-
 
 
 
