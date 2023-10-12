@@ -18,7 +18,7 @@ class Vertex:
 class Descripter_link:
     def __set_name__(self, owner, name):
         self.name = '_' + name
-        self.keyname = name
+        # self.keyname = name
 
     def __get__(self, instance, owner):
         if instance is not None:
@@ -56,7 +56,7 @@ class LinkedGraph:
         res1 = tuple(filter(lambda x: Link(x.v1, x.v2) in self._links, self._links))
         res2 = tuple(filter(lambda x: Link(x.v2, x.v1) in self._links, self._links))
         # res1 = tuple(filter(lambda x: id(x.v1) == id(link.v1) and id(x.v2) == id(link.v2), self._links))
-        # res2 = tuple(filter(lambda x: id(x.v1) == id(link.v2) and id(x.v1) == id(link.v2), self._links))
+        # res2 = tuple(filter(lambda x: id(x.v1) == id(link.v2) and id(x.v2) == id(link.v1), self._links))
         if len(res1) == 0 or len(res2) == 0:
             self._links.append(link)
             self.add_vertex(link.v1)
@@ -64,8 +64,39 @@ class LinkedGraph:
             link.v1.links.append(link.v1)
             link.v1.links.append(link.v2)
 
+        ##############################################################
+
+        # res = tuple(filter(lambda x: id(x.v1) == id(link.v1) and id(x.v2) == id(link.v2) or \
+        #                    id(x.v2) == id(link.v1) and id(x.v1) == id(link.v2), self._links))
+        # if len(res) == 00:
+        #     self._links.append(link)
+        #     self.add_vertex(link.v1)
+        #     self.add_vertex(link.v2)
+        #     link.v1.links.append(link.v1)
+        #     link.v1.links.append(link.v2)
+
     def find_path(self, start_v, stop_v):
-        pass
+        self._start = start_v
+        self._stop = stop_v
+        return self.step_next(self._start, [], [])
+
+    def step_next(self, current, cur_path, cur_link):
+        best_path = []
+        best_link = []
+        len_path = -1
+        if current == self._stop:
+            return cur_path, cur_link
+        for link in current.links:
+            temp_path = []
+            temp_link = []
+            if link.v1 not in cur_path:
+                temp_path, temp_link = self.step_next(link.v1, cur_path.copy(), cur_link.copy())
+            elif link.v2 not in cur_path:
+                temp_path, temp_link = self.step_next(link.v2, cur_path.copy(), cur_link.copy())
+            if self._stop in temp_path:
+                best_path = temp_path.copy()
+                best_link = temp_link.copy()
+        return best_path, best_link
 
 
 class Station(Vertex):
@@ -139,8 +170,8 @@ map_metro.add_link(LinkMetro(v5, v6, 3))
 
 print(len(map_metro._links))
 print(len(map_metro._vertex))
-# path = map_metro.find_path(v1, v6)  # от сретенского бульвара до китай-город 1
-# print(path[0])    # [Сретенский бульвар, Тургеневская, Китай-город 2, Китай-город 1]
+path = map_metro.find_path(v1, v6)  # от сретенского бульвара до китай-город 1
+print(path[0])    # [Сретенский бульвар, Тургеневская, Китай-город 2, Китай-город 1]
 # print(sum([x.dist for x in path[1]]))  # 7
 
 print('-' * 30)
@@ -154,7 +185,6 @@ for i in v2.links:
 print('-' * 30)
 for i in v3.links:
     print(i)
-
 
 
 
