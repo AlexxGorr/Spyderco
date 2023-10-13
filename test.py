@@ -1,10 +1,10 @@
 class Vertex:
-    ID_POINT = 0
+    # ID_POINT = 0
 
     def __init__(self):
         self._links = []
-        Vertex.ID_POINT += 1
-        self._id = Vertex.ID_POINT
+        # Vertex.ID_POINT += 1
+        # self._id = Vertex.ID_POINT
 
     @property
     def links(self):
@@ -15,32 +15,44 @@ class Vertex:
     #     self._links = link
 
 
-class Descripter_link:
-    def __set_name__(self, owner, name):
-        self.name = '_' + name
-        # self.keyname = name
-
-    def __get__(self, instance, owner):
-        if instance is not None:
-            return property()
-        return getattr(instance, self.name)
-
-    # def __set__(self, instance, value):
-    #     if self.keyname in ('v1', 'v2') and not isinstance(value, Vertex) or \
-    #             self.keyname == 'dist' and value < 1:
-    #         raise ValueError('Link attr error!')
-    #     setattr(instance, self.name, value)
+# class Descripter_link:
+#     def __set_name__(self, owner, name):
+#         self.name = '_' + name
+#         # self.keyname = name
+#
+#     def __get__(self, instance, owner):
+#         if instance is not None:
+#             return property()
+#         return getattr(instance, self.name)
+#
+#     # def __set__(self, instance, value):
+#     #     if self.keyname in ('v1', 'v2') and not isinstance(value, Vertex) or \
+#     #             self.keyname == 'dist' and value < 1:
+#     #         raise ValueError('Link attr error!')
+#     #     setattr(instance, self.name, value)
 
 
 class Link:
-    v1 = Descripter_link()
-    v2 = Descripter_link()
-    dist = Descripter_link()
+    # v1 = Descripter_link()
+    # v2 = Descripter_link()
+    # dist = Descripter_link()
 
     def __init__(self, v1, v2):
-        self.v1 = v1
-        self.v2 = v2
-        self.dist = 1
+        self._v1 = v1
+        self._v2 = v2
+        self._dist = 1
+
+    @property
+    def v1(self):
+        return self._v1
+
+    @property
+    def v2(self):
+        return self._v2
+
+    @property
+    def dist(self):
+        return self._dist
 
 
 class LinkedGraph:
@@ -53,47 +65,54 @@ class LinkedGraph:
             self._vertex.append(v)
 
     def add_link(self, link):
-        res1 = tuple(filter(lambda x: Link(x.v1, x.v2) in self._links, self._links))
-        res2 = tuple(filter(lambda x: Link(x.v2, x.v1) in self._links, self._links))
-        # res1 = tuple(filter(lambda x: id(x.v1) == id(link.v1) and id(x.v2) == id(link.v2), self._links))
-        # res2 = tuple(filter(lambda x: id(x.v1) == id(link.v2) and id(x.v2) == id(link.v1), self._links))
-        if len(res1) == 0 or len(res2) == 0:
-            self._links.append(link)
-            self.add_vertex(link.v1)
-            self.add_vertex(link.v2)
-            link.v1.links.append(link.v1)
-            link.v1.links.append(link.v2)
-
-        ##############################################################
-
-        # res = tuple(filter(lambda x: id(x.v1) == id(link.v1) and id(x.v2) == id(link.v2) or \
-        #                    id(x.v2) == id(link.v1) and id(x.v1) == id(link.v2), self._links))
-        # if len(res) == 00:
+        # res1 = tuple(filter(lambda x: Link(x.v1, x.v2) in self._links, self._links))
+        # res2 = tuple(filter(lambda x: Link(x.v2, x.v1) in self._links, self._links))
+        # # res1 = tuple(filter(lambda x: id(x.v1) == id(link.v1) and id(x.v2) == id(link.v2), self._links))
+        # # res2 = tuple(filter(lambda x: id(x.v1) == id(link.v2) and id(x.v2) == id(link.v1), self._links))
+        # if len(res1) == 0 or len(res2) == 0:
         #     self._links.append(link)
         #     self.add_vertex(link.v1)
         #     self.add_vertex(link.v2)
-        #     link.v1.links.append(link.v1)
-        #     link.v1.links.append(link.v2)
+        #     link.v1.links.append(link)
+        #     link.v1.links.append(link)
+
+        ##############################################################
+
+        res = tuple(filter(lambda x: id(x.v1) == id(link.v1) and id(x.v2) == id(link.v2) or \
+                           id(x.v2) == id(link.v1) and id(x.v1) == id(link.v2), self._links))
+        if len(res) == 0:
+            self._links.append(link)
+            self.add_vertex(link.v1)
+            self.add_vertex(link.v2)
+            link.v1.links.append(link)
+            link.v1.links.append(link)
 
     def find_path(self, start_v, stop_v):
         self._start = start_v
         self._stop = stop_v
-        return self.step_next(self._start, [], [])
+        return self.step_next(self._start, None, [], [])
 
-    def step_next(self, current, cur_path, cur_link):
+    def distant(self, links):
+        return sum([x.dist for x in links if x is not None])
+
+    def step_next(self, current, prev, cur_path, cur_link):
+        cur_path += [current]
+        if prev:
+            cur_link += [prev]
+        if current == self._stop:
+            return cur_path, cur_link
         best_path = []
         best_link = []
         len_path = -1
-        if current == self._stop:
-            return cur_path, cur_link
         for link in current.links:
             temp_path = []
             temp_link = []
             if link.v1 not in cur_path:
-                temp_path, temp_link = self.step_next(link.v1, cur_path.copy(), cur_link.copy())
+                temp_path, temp_link = self.step_next(link.v1, link, cur_path.copy(), cur_link.copy())
             elif link.v2 not in cur_path:
-                temp_path, temp_link = self.step_next(link.v2, cur_path.copy(), cur_link.copy())
-            if self._stop in temp_path:
+                temp_path, temp_link = self.step_next(link.v2, link, cur_path.copy(), cur_link.copy())
+            if self._stop in temp_path and (len_path > self.distant(temp_link) or len_path == -1):
+                len_path = self.distant(temp_link)
                 best_path = temp_path.copy()
                 best_link = temp_link.copy()
         return best_path, best_link
@@ -105,7 +124,8 @@ class Station(Vertex):
         self._name = name
 
     def __repr__(self):
-        return f'{self._id} - {self._name}'
+        # return f'{self._id} - {self._name}'
+        return self._name
 
 
 class LinkMetro(Link):
@@ -172,19 +192,19 @@ print(len(map_metro._links))
 print(len(map_metro._vertex))
 path = map_metro.find_path(v1, v6)  # от сретенского бульвара до китай-город 1
 print(path[0])    # [Сретенский бульвар, Тургеневская, Китай-город 2, Китай-город 1]
-# print(sum([x.dist for x in path[1]]))  # 7
+print(sum([x.dist for x in path[1]]))  # 7
 
 print('-' * 30)
 for i in v1.links:
-    print(i)
+    print(i.__dict__)
 
 print('-' * 30)
 for i in v2.links:
-    print(i)
+    print(i.__dict__)
 
 print('-' * 30)
 for i in v3.links:
-    print(i)
+    print(i.__dict__)
 
 
 
