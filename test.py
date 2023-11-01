@@ -16,6 +16,18 @@ class Ship:
     def get_start_coords(self):
         return self._x, self._y
 
+    def dots(self):
+        ship_dots = []
+        for i in self._cells:
+            coor_x = self.get_start_coords()[0]
+            coor_y = self.get_start_coords()[1]
+            if self._tp == 1:
+                coor_x += i
+            if self._tp == 2:
+                coor_y += i
+            ship_dots.append((coor_x, coor_y))
+        return ship_dots
+
     def move(self, go):
         go = 0
         if self._is_move:
@@ -47,12 +59,6 @@ class Ship:
 
 ship = Ship(5)
 print(ship.__dict__)
-
-val = ship[2]
-print(val)
-
-ship[2] = 4
-print(ship._cells)
 
 
 class GamePole:
