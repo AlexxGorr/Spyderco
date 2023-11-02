@@ -10,11 +10,14 @@ class Ship:
         self._is_move = True
         self._cells = [1 for _ in range(length)]
 
-    def set_start_coords(self, x, y):
-        self._x, self._y = x, y
+    @staticmethod
+    def set_start_coords(x, y):
+        x = rnd(0, 9)
+        y = rnd(0, 9)
+        return x, y
 
     def get_start_coords(self):
-        return self._x, self._y
+        return self.set_start_coords(self._x, self._y)
 
     def dots(self):
         ship_dots = []
@@ -43,7 +46,7 @@ class Ship:
         for i in ship:
             for dx, dy in contour:
                 coord_collide = i._x + dx, i._y + dy
-        if coord_collide == self.get_start_coords():
+        if coord_collide != '0':
             return True
 
     def is_out_pole(self, size):
@@ -59,6 +62,9 @@ class Ship:
 
 ship = Ship(5)
 print(ship.__dict__)
+print(ship.get_start_coords())
+print(ship.dots())
+
 
 
 class GamePole:
@@ -90,7 +96,7 @@ class GamePole:
 
     def show(self):
         for i in range(self._size):
-            print(*[0 for _ in range(self._size)])
+            print(*['0' for _ in range(self._size)])
 
     def get_pole(self):
         return [[x for x in range(self._size)] for y in range(self._size)]
