@@ -67,34 +67,34 @@ class GamePole:
 
     def init(self):
         ships = [
-            Ship(4, tp=rnd(1, 2)),
+            # Ship(4, tp=rnd(1, 2)),
             # Ship(3, tp=rnd(1, 2)),
             # Ship(3, tp=rnd(1, 2)),
             # Ship(2, tp=rnd(1, 2)),
             # Ship(2, tp=rnd(1, 2)),
-            # Ship(2, tp=rnd(1, 2)),
+            Ship(2, tp=rnd(1, 2)),
             # Ship(1, tp=rnd(1, 2)),
             # Ship(1, tp=rnd(1, 2)),
             # Ship(1, tp=rnd(1, 2)),
-            # Ship(1, tp=rnd(1, 2)),
+            Ship(1, tp=rnd(1, 2)),
         ]
         for sh in ships:
             self._ships.append(sh)
 
         for ship in self._ships:
-            ship_position = True
-            while ship_position:
+            ship_position = False
+            while not ship_position:
                 ship._x = rnd(0, self._size-1)
                 ship._y = rnd(0, self._size-1)
+                print(ship._x, ship._y)
                 ship_position = self.__check_position(ship._length, ship._tp, ship._x, ship._y)
 
-        for row in range(self._size):
-            for col in range(row):
-                if (row, col) in self._busy_cells:
-                    self._pole[row][col] = 1
+        for x, y in self._busy_cells:
+            if 0 <= x <= 9 and 0 <= y <= 9:
+                self._pole[x][y] = 1
 
     def __check_position(self, ln, orient, x, y):
-        if orient == 1 and (x + ln - 1) <= self._size - 1 and (x, y) not in self._busy_cells:
+        if orient == 1 and (x + ln - 1) <= self._size-1 and (x, y) not in self._busy_cells:
             for i in range(x-1, x+ln+1):
                 for j in range(y-1, y+2):
                     if (i, j) not in self._busy_cells:
@@ -102,7 +102,7 @@ class GamePole:
                     else:
                         continue
             return True
-        elif orient == 2 and (y + ln - 1) <= self._size - 1 and (x, y) not in self._busy_cells:
+        elif orient == 2 and (y + ln - 1) <= self._size-1 and (x, y) not in self._busy_cells:
             for i in range(x-1, x+2):
                 for j in range(y-1, y+ln+1):
                     if (i, j) not in self._busy_cells:
