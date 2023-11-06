@@ -10,31 +10,30 @@ class Ship:
         self._is_move = True
         self._cells = [1 for _ in range(length)]
 
-    @staticmethod
-    def set_start_coords(x, y):
-        x = rnd(0, 9)
-        y = rnd(0, 9)
-        return x, y
+    def set_start_coords(self, x, y):
+        self._x, self._y = x, y
 
     def get_start_coords(self):
-        return self.set_start_coords(self._x, self._y)
+        return self._x, self._y
 
-    def dots(self):
-        ship_dots = []
-        for i in self._cells:
-            coor_x = self.get_start_coords()[0]
-            coor_y = self.get_start_coords()[1]
-            if self._tp == 1:
-                coor_x += i
-            if self._tp == 2:
-                coor_y += i
-            ship_dots.append((coor_x, coor_y))
-        return ship_dots
+    # def dots(self):
+    #     ship_dots = []
+    #     for i in self._cells:
+    #         coor_x = self._x
+    #         coor_y = self._y
+    #         if self._tp == 1:
+    #             coor_x += i
+    #         if self._tp == 2:
+    #             coor_y += i
+    #         ship_dots.append((coor_x, coor_y))
+    #     return ship_dots
 
     def move(self, go):
-        go = 0
         if self._is_move:
-            go += 1
+            if self._tp == 1:
+                self._x += go
+            if self._tp == 2:
+                self._y += go
 
     def is_collide(self, ship):
         contour = [
@@ -42,12 +41,11 @@ class Ship:
             (0, -1), (0, 0), (0, 1),
             (1, -1), (1, 0), (1, 1),
         ]
-        coord_collide = (0, 0)
         for i in ship:
             for dx, dy in contour:
-                coord_collide = i._x + dx, i._y + dy
-        if coord_collide != '0':
-            return True
+                cell_contour = i._x + dx, i._y + dy
+                if cell_contour[self._x][self._y] == 1:
+                    return True
 
     def is_out_pole(self, size):
         if self._x not in range(size) or self._y not in range(size):
@@ -60,33 +58,60 @@ class Ship:
         self._cells[key] = value
 
 
-ship = Ship(5)
-print(ship.__dict__)
-print(ship.get_start_coords())
-print(ship.dots())
-
-
-
 class GamePole:
     def __init__(self, size=10):
         self._size = size
         self._ships = []
+        self._busy_cells = []
+        self._pole = [[0 for _ in range(size)] for _ in range(size)]
 
     def init(self):
         ships = [
             Ship(4, tp=rnd(1, 2)),
-            Ship(3, tp=rnd(1, 2)),
-            Ship(3, tp=rnd(1, 2)),
-            Ship(2, tp=rnd(1, 2)),
-            Ship(2, tp=rnd(1, 2)),
-            Ship(2, tp=rnd(1, 2)),
-            Ship(1, tp=rnd(1, 2)),
-            Ship(1, tp=rnd(1, 2)),
-            Ship(1, tp=rnd(1, 2)),
-            Ship(1, tp=rnd(1, 2)),
+            # Ship(3, tp=rnd(1, 2)),
+            # Ship(3, tp=rnd(1, 2)),
+            # Ship(2, tp=rnd(1, 2)),
+            # Ship(2, tp=rnd(1, 2)),
+            # Ship(2, tp=rnd(1, 2)),
+            # Ship(1, tp=rnd(1, 2)),
+            # Ship(1, tp=rnd(1, 2)),
+            # Ship(1, tp=rnd(1, 2)),
+            # Ship(1, tp=rnd(1, 2)),
         ]
         for sh in ships:
             self._ships.append(sh)
+
+        for ship in self._ships:
+            ship_position = True
+            while ship_position:
+                ship._x = rnd(0, self._size-1)
+                ship._y = rnd(0, self._size-1)
+                ship_position = self.__check_position(ship._length, ship._tp, ship._x, ship._y)
+
+        for row in range(self._size):
+            for col in range(row):
+                if (row, col) in self._busy_cells:
+                    self._pole[row][col] = 1
+
+    def __check_position(self, ln, orient, x, y):
+        if orient == 1 and (x + ln - 1) <= self._size - 1 and (x, y) not in self._busy_cells:
+            for i in range(x-1, x+ln+1):
+                for j in range(y-1, y+2):
+                    if (i, j) not in self._busy_cells:
+                        self._busy_cells.append((i, j))
+                    else:
+                        continue
+            return True
+        elif orient == 2 and (y + ln - 1) <= self._size - 1 and (x, y) not in self._busy_cells:
+            for i in range(x-1, x+2):
+                for j in range(y-1, y+ln+1):
+                    if (i, j) not in self._busy_cells:
+                        self._busy_cells.append((i, j))
+                    else:
+                        continue
+            return True
+        else:
+            return False
 
     def get_ships(self):
         return [x for x in self._ships]
@@ -95,8 +120,8 @@ class GamePole:
         pass
 
     def show(self):
-        for i in range(self._size):
-            print(*['0' for _ in range(self._size)])
+        for line in self._pole:
+            print(*list(map(lambda x: x, line)))
 
     def get_pole(self):
         return [[x for x in range(self._size)] for y in range(self._size)]
@@ -112,7 +137,10 @@ pole.move_ships()
 print()
 pole.show()
 
-
+print('-' * 30)
+print(pole._busy_cells)
+for i in pole._ships:
+    print(i.__dict__)
 
 
 
