@@ -49,7 +49,11 @@ class Ship:
 
     def is_out_pole(self, size):
         if self._x not in range(size) or self._y not in range(size):
-            return True
+            if self._tp == 1:
+                return self._x + self._length < size
+            elif self._tp == 2:
+                return self._y + self._length < size
+            return False
 
     def __getitem__(self, item):
         return self._cells[item]
