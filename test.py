@@ -91,16 +91,19 @@ class GamePole:
             self._ships.append(sh)
 
         for ship in self._ships:
-            ship._x = rnd(0, self._size-1)
-            ship._y = rnd(0, self._size-1)
+            ship.set_start_coords(rnd(0, self._size-1), rnd(0, self._size-1))
+            start_coord = ship.get_start_coords()
+            print('get_start: ', start_coord)
+            # ship._x = rnd(0, self._size-1)
+            # ship._y = rnd(0, self._size-1)
             if ship._tp == 1:
-                for i in range(ship._x, ship._x + ship._length):
-                    for j in range(ship._y, ship._y + 1):
+                for i in range(start_coord[0], start_coord[0] + ship._length):
+                    for j in range(start_coord[1], start_coord[1] + 1):
                         self._busy_cells.append((i, j))
                         self._busy_contour.append(ship.is_collide((i, j)))
             if ship._tp == 2:
-                for i in range(ship._x, ship._x + 1):
-                    for j in range(ship._y, ship._y + ship._length):
+                for i in range(start_coord[0], start_coord[0] + 1):
+                    for j in range(start_coord[1], start_coord[1] + ship._length):
                         self._busy_cells.append((i, j))
 
         for x, y in self._busy_cells:
@@ -173,9 +176,8 @@ pole.show()
 
 print('-' * 30)
 print(pole._busy_cells)
-print('-' * 30)
-print(pole._busy_contour)
-
+# print('-' * 30)
+# print(pole._busy_contour)
 
 
 
