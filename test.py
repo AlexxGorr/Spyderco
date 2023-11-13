@@ -90,8 +90,7 @@ class GamePole:
                 self._busy_contour.append(ship.is_collide(self._busy_cells))
 
         for x, y in self._busy_cells:
-            if 0 <= x <= self._size-1 and 0 <= y <= self._size-1:
-                self._pole[y][x] = "■"
+            self._pole[y][x] = "■"
 
         for cont in self._busy_contour:
             for x, y in cont:
