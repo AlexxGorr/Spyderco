@@ -30,9 +30,9 @@ class Ship:
             (1, -1), (1, 0), (1, 1),
         ]
         res = []
-        for i in ship:
+        for i, j in ship:
             for dx, dy in contour:
-                cell_contour = i + dx, i + dy
+                cell_contour = i + dx, j + dy
                 res.append(cell_contour)
                 # if cell_contour[self._x][self._y] == 1:
                 #     return True
@@ -64,7 +64,7 @@ class GamePole:
         ships = [
             Ship(4, tp=rnd(1, 2)),
             Ship(3, tp=rnd(1, 2)),
-            # Ship(3, tp=rnd(1, 2)),
+            Ship(3, tp=rnd(1, 2)),
             # Ship(2, tp=rnd(1, 2)),
             # Ship(2, tp=rnd(1, 2)),
             # Ship(2, tp=rnd(1, 2)),
@@ -87,23 +87,24 @@ class GamePole:
                 x = start_coord[0]
                 y = start_coord[1]
                 ship_pos = self.__check_pos(x, y, ship._tp, ship._length, ship.is_out_pole(self._size))
+                self._busy_contour.append(ship.is_collide(self._busy_cells))
 
         for x, y in self._busy_cells:
             if 0 <= x <= self._size-1 and 0 <= y <= self._size-1:
                 self._pole[y][x] = "■"
 
-        # for cont in self._busy_contour:
-        #     for x, y in cont:
-        #         if 0 <= x <= self._size-1 and 0 <= y <= self._size-1:
-        #             if self._pole[y][x] != "■":
-        #                 self._pole[y][x] = '*'
+        for cont in self._busy_contour:
+            for x, y in cont:
+                if 0 <= x <= self._size-1 and 0 <= y <= self._size-1:
+                    if self._pole[y][x] != "■":
+                        self._pole[y][x] = '*'
 
     def __check_pos(self, x, y, orient, ln, out):
         if not out:
             if orient == 1 and (x, y) not in self._busy_cells:
                 for i in range(x, x + ln):
                     for j in range(y, y + 1):
-                        if (i, j) not in self._busy_cells:
+                        if (i, j) not in self._busy_contour:
                             self._busy_cells.append((i, j))
                         else:
                             continue
@@ -111,7 +112,7 @@ class GamePole:
             if orient == 2 and (x, y) not in self._busy_cells:
                 for i in range(x, x + 1):
                     for j in range(y, y + ln):
-                        if (i, j) not in self._busy_cells:
+                        if (i, j) not in self._busy_contour:
                             self._busy_cells.append((i, j))
                         else:
                             continue
@@ -147,7 +148,6 @@ print('-' * 30)
 print(pole._busy_cells)
 # print('-' * 30)
 # print(pole._busy_contour)
-
 
 
 
