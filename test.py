@@ -3,17 +3,17 @@ from random import randint as rnd
 
 class Ship:
     MARK_CELL = 1
-    MARK_CELL_KILL = 2
+    MARK_CELL_KILL = 'X'
 
     def __init__(self, length, tp=1, x=None, y=None):
         self._length: int = length
         self._tp: int = tp
         self._x: int = x
         self._y: int = y
-        self._cells = [self.MARK_CELL for _ in range(length)]
-        self._cells_it = iter(self._cells)
-        # self._cells = [i+1 for i in range(4)]
-        # self._cells_it = iter(self._cells)
+        # self._cells = [self.MARK_CELL for _ in range(length)]
+        # self._cells_iter = iter(self._cells)
+        self._cells = [i+1 for i in range(length)]
+        self._cells_iter = iter(self._cells)
         # self._cells[1] = self.MARK_CELL_KILL
         self._is_move = False if any(map(lambda x: x == self.MARK_CELL_KILL, self._cells)) else True
 
@@ -72,18 +72,20 @@ class GamePole:
         self._contour = []
         self._pole = [[self.MARK_WATER for _ in range(size)] for _ in range(size)]
 
-    def init(self, verbos_contour=False):
+    def init(self, verbos_contour=True):
         ships = [
-            Ship(4, tp=rnd(1, 2)),
-            Ship(3, tp=rnd(1, 2)),
-            Ship(3, tp=rnd(1, 2)),
-            Ship(2, tp=rnd(1, 2)),
-            Ship(2, tp=rnd(1, 2)),
-            Ship(2, tp=rnd(1, 2)),
-            Ship(1, tp=rnd(1, 2)),
-            Ship(1, tp=rnd(1, 2)),
-            Ship(1, tp=rnd(1, 2)),
-            Ship(1, tp=rnd(1, 2)),
+            # Ship(4, tp=rnd(1, 2)),
+            # Ship(3, tp=rnd(1, 2)),
+            # Ship(3, tp=rnd(1, 2)),
+            # Ship(2, tp=rnd(1, 2)),
+            # Ship(2, tp=rnd(1, 2)),
+            # Ship(2, tp=rnd(1, 2)),
+            # Ship(1, tp=rnd(1, 2)),
+            # Ship(1, tp=rnd(1, 2)),
+            # Ship(1, tp=rnd(1, 2)),
+            # Ship(1, tp=rnd(1, 2)),
+            Ship(4, tp=1),
+            Ship(3, tp=2),
         ]
         for sh in ships:
             self._ships.append(sh)
@@ -96,7 +98,7 @@ class GamePole:
                 x = start_coord[0]
                 y = start_coord[1]
                 ship_position = self.__check_position(x, y, ship._tp, ship._length,
-                                                      ship.is_out_pole(self._size), ship._cells_it)
+                                                      ship.is_out_pole(self._size), ship._cells_iter)
 
                 # REPR INITIAL SHIPS ###########################
                 print(f'get_start: {start_coord} | tp: {ship._tp} | ln: {ship._length} | '
@@ -165,19 +167,21 @@ SIZE_GAME_POLE = 10
 
 pole = GamePole(SIZE_GAME_POLE)
 pole.init()
+print()
 pole.show()
 pole.move_ships()
 print()
 pole.show()
 
-print('-' * 30)
+print('-' * 50)
 print('ship cells: ', len(pole._busy_cells))
 print(pole._busy_cells)
 
-print('-' * 30)
+print('-' * 50)
 print('contour cells: ', len( pole._busy_contour))
+print(pole._busy_contour)
 
-print('-' * 30)
+print('-' * 50)
 for i in pole.get_ships():
     print(f'ln: {i._length} | tp: {i._tp} | cells: {i._cells} - is_move: {i._is_move}')
 
