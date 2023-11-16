@@ -10,10 +10,10 @@ class Ship:
         self._tp: int = tp
         self._x: int = x
         self._y: int = y
-        # self._cells = [self.MARK_CELL for _ in range(length)]
-        # self._cells_iter = iter(self._cells)
-        self._cells = [i+1 for i in range(length)]
+        self._cells = [self.MARK_CELL for _ in range(length)]
         self._cells_iter = iter(self._cells)
+        # self._cells = [i+1 for i in range(length)]
+        # self._cells_iter = iter(self._cells)
         # self._cells[1] = self.MARK_CELL_KILL
         self._is_move = False if any(map(lambda x: x == self.MARK_CELL_KILL, self._cells)) else True
 
@@ -34,7 +34,7 @@ class Ship:
         pass
 
     @staticmethod
-    def is_collide(ship):
+    def contour(ship):
         contour = [
             (-1, -1), (-1, 0), (-1, 1),
             (0, -1), (0, 0), (0, 1),
@@ -46,6 +46,11 @@ class Ship:
                 cell_contour = i + dx, j + dy
                 result.append(cell_contour)
         return result
+
+    def is_collide(self, ship):
+        # x, y = ship
+        # return self.MARK_CELL in self.contour((x, y))
+        pass
 
     def is_out_pole(self, size):
         if self._tp == 1:
@@ -104,7 +109,7 @@ class GamePole:
                 print(f'get_start: {start_coord} | tp: {ship._tp} | ln: {ship._length} | '
                       f'pos: {ship_position}')
 
-                self._contour.append(ship.is_collide(self._busy_cells))
+                self._contour.append(ship.contour(self._busy_cells))
                 for i in self._contour:
                     for j in i:
                         if j not in self._busy_contour:
@@ -118,11 +123,16 @@ class GamePole:
                         if verbos_contour:
                             self._pole[y][x] = self.MARK_CONTOUR
 
+    def __check_collide(self):
+        pass
+
     def __check_position(self, x, y, orient, ln, out, cells):
+        collide = Ship(ln)
         if not out:
             if orient == 1 and (x, y) not in self._busy_cells:
                 for i in range(x, x + ln):
                     for j in range(y, y + 1):
+                        # if not collide.is_collide((i, j)):
                         if (i, j) in self._busy_contour:
                             return False
                         else:
@@ -133,6 +143,7 @@ class GamePole:
             if orient == 2 and (x, y) not in self._busy_cells:
                 for i in range(x, x + 1):
                     for j in range(y, y + ln):
+                        # if not collide.is_collide((i, j)):
                         if (i, j) in self._busy_contour:
                             return False
                         else:
@@ -160,7 +171,7 @@ class GamePole:
             print(*line)
 
     def get_pole(self):
-        return [[x for x in range(self._size)] for y in range(self._size)]
+        return [[self.MARK_WATER if type(i) is str else i for i in line] for line in self._pole]
 
 
 SIZE_GAME_POLE = 10
@@ -184,6 +195,7 @@ print(pole._busy_contour)
 print('-' * 50)
 for i in pole.get_ships():
     print(f'ln: {i._length} | tp: {i._tp} | cells: {i._cells} - is_move: {i._is_move}')
+
 
 
 
