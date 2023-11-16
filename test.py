@@ -47,8 +47,9 @@ class Ship:
                 result.append(cell_contour)
         return result
 
-    def is_collide(self, ship, busy):
-        return ship in busy
+    @staticmethod
+    def is_collide(ship, *args):
+        return ship in args
 
     def is_out_pole(self, size):
         if self._tp == 1:
