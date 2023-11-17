@@ -33,8 +33,7 @@ class Ship:
         # return self.set_start_coords(x, y)
         pass
 
-    @staticmethod
-    def contour(ship):
+    def contour(self, ship):
         contour = [
             (-1, -1), (-1, 0), (-1, 1),
             (0, -1), (0, 0), (0, 1),
@@ -47,9 +46,9 @@ class Ship:
                 result.append(cell_contour)
         return result
 
-    @staticmethod
-    def is_collide(ship, *args):
-        return ship in args
+    def is_collide(self, ship):
+        cont = GamePole()
+        return ship in cont._busy_contour
 
     def is_out_pole(self, size):
         if self._tp == 1:
@@ -128,8 +127,8 @@ class GamePole:
             if orient == 1 and (x, y) not in self._busy_cells:
                 for i in range(x, x + ln):
                     for j in range(y, y + 1):
-                        if collide.is_collide((i, j), self._busy_contour):
-                        # if (i, j) in self._busy_contour:
+                        # if collide.is_collide((i, j)):
+                        if (i, j) in self._busy_contour:
                             return False
                         else:
                             self._busy_cells.append((i, j))
@@ -139,8 +138,8 @@ class GamePole:
             if orient == 2 and (x, y) not in self._busy_cells:
                 for i in range(x, x + 1):
                     for j in range(y, y + ln):
-                        if collide.is_collide((i, j), self._busy_contour):
-                        # if (i, j) in self._busy_contour:
+                        # if collide.is_collide((i, j)):
+                        if (i, j) in self._busy_contour:
                             return False
                         else:
                             self._busy_cells.append((i, j))
@@ -191,7 +190,6 @@ print(pole._busy_contour)
 print('-' * 50)
 for i in pole.get_ships():
     print(f'ln: {i._length} | tp: {i._tp} | cells: {i._cells} - is_move: {i._is_move}')
-
 
 
 
