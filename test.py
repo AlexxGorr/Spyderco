@@ -17,6 +17,7 @@ class Ship:
         ##########################################################
         self._cells = [i+1 for i in range(length)]
         self._cells_iter = iter(self._cells)
+        self._cells_move_iter = iter(self._cells)
         # self._cells[1] = self.MARK_CELL_KILL
         ##########################################################
         self._is_move = False if any(map(lambda x: x == self.MARK_CELL_KILL, self._cells)) else True
@@ -28,12 +29,12 @@ class Ship:
         return self._x, self._y
 
     def move(self, go):
-        positive = 1
-        negative = -1
-        go = choice([positive, negative])
         if self._is_move:
-            return go
-        return None
+            if self._tp == 1:
+                return self._x + go, self._y
+            if self._tp == 2:
+                return self._x, self._y + go
+        return self._x, self._y
 
     @staticmethod
     def contour(cell):
@@ -105,6 +106,7 @@ class GamePole:
     def __init__(self, size=10):
         self._size = size
         self._ships = []
+        self._ships_move = []
         self._busy_cells = []
         self._pole = [[self.MARK_WATER for _ in range(size)] for _ in range(size)]
         self._count = 0
@@ -114,7 +116,7 @@ class GamePole:
         ships = [
             Ship(4, tp=randint(1, 2)),
             Ship(3, tp=randint(1, 2)),
-            # Ship(3, tp=randint(1, 2)),
+            Ship(3, tp=randint(1, 2)),
             # Ship(2, tp=randint(1, 2)),
             # Ship(2, tp=randint(1, 2)),
             # Ship(2, tp=randint(1, 2)),
@@ -143,10 +145,12 @@ class GamePole:
 
     def __check_collision(self):
         count = 0
+        if len(self._ships) < 2:
+            return True
         for i in range(len(self._ships)):
             for j in range(len(self._ships)):
                 if i != j:
-                    print(f'check: {i+1} - {j+1}')
+                    # print(f'check: {i+1} - {j+1}')
                     if self._ships[i].is_collide(self._ships[j]):
                         print(f'Collide! '
                               f'{i+1}: ({self._ships[i]._x}, '
@@ -165,17 +169,30 @@ class GamePole:
     def __is_perimetr_ships(self, ship):
         ship_position = False
         while not ship_position and len(self._busy_cells) < 20:
-            ship.set_start_coords(randint(0, self._size - 1), randint(0, self._size - 1))
+            if ship._tp == 1:
+                ship.set_start_coords(
+                    randint(0, self._size - 1 - ship._length),
+                    randint(0, self._size - 1)
+                )
+            if ship._tp == 2:
+                ship.set_start_coords(
+                    randint(0, self._size - 1),
+                    randint(0, self._size - 1 - ship._length)
+                )
             start_coord = ship.get_start_coords()
             x = start_coord[0]
             y = start_coord[1]
-            ship_position = self.__check_position(x, y, ship._tp, ship._length,
-                                                  ship.is_out_pole(self._size), ship._cells_iter)
+            ship_position = self.__check_position(x,
+                                                  y,
+                                                  ship._tp,
+                                                  ship._length,
+                                                  ship.is_out_pole(self._size),
+                                                  ship._cells_iter)
 
             # REPR INITIAL SHIPS ###########################
-            if ship_position:
-                print(f'start: {start_coord} | tp: {ship._tp} | ln: {ship._length} | '
-                      f'position: {ship_position}')
+            # if ship_position:
+            print(f'start: {start_coord} | tp: {ship._tp} | ln: {ship._length} | '
+                  f'position: {ship_position}')
 
     def __check_position(self, x, y, orient, ln, out, cells):
         if not out:
@@ -185,7 +202,7 @@ class GamePole:
                         if (i, j) in self._busy_cells:
                             continue
                         if True:
-                            self.__fill_position(i, j, cells, verbose_contour=False)
+                            self.__fill_position(i, j, next(cells))
                 return True
             if orient == 2 and (x, y) not in self._busy_cells:
                 for i in range(x, x + 1):
@@ -193,14 +210,17 @@ class GamePole:
                         if (i, j) in self._busy_cells:
                             continue
                         if True:
-                            self.__fill_position(i, j, cells, verbose_contour=False)
+                            self.__fill_position(i, j, next(cells))
                 return True
             return False
 
-    def __fill_position(self, i, j, cells, verbose_contour):
+    def __fill_position(self, i, j, cells):
         self._busy_cells.append((i, j))
-        self._pole[j][i] = next(cells)
+        self._pole[j][i] = cells
         contour = Ship.contour([(i, j)])
+        self.__fill_contour(contour)
+
+    def __fill_contour(self, contour, verbose_contour=False):
         for b, a in contour:
             if a in range(0, self._size) and b in range(0, self._size):
                 if self._pole[a][b] == self.MARK_WATER:
@@ -212,18 +232,131 @@ class GamePole:
     def get_ships(self):
         return [x for x in self._ships]
 
+    def get_ships_move(self):
+        return [x for x in self._ships_move]
+
+    @staticmethod
+    def __check_go_perimetr(go, coord, size, ln):
+        if not go + coord in range(0, size - ln):
+            return False
+        return True
+
+    def __check_collision_move(self):
+        if len(self._ships_move) < 2:
+            return True
+        # for num, i in enumerate(self._ships_move):
+        #     print(f'_{num+1}__ship: ({i._x}, {i._y})')
+        for i in range(len(self._ships_move)):
+            for j in range(len(self._ships_move)):
+                if i != j:
+                    if self._ships_move[i].is_collide(self._ships_move[j]):
+                        print(f'Collide! '
+                              f'{i + 1}: ({self._ships_move[i]._x}, '
+                              f'{self._ships_move[i]._y}) ln:{self._ships_move[i]._length} | '
+                              f'{j + 1}: ({self._ships_move[j]._x}, '
+                              f'{self._ships_move[j]._y}) ln:{self._ships_move[j]._length}')
+                        return False
+                    return True
+
+    # метод перезаписывает коллекцию self._pole
     def move_ships(self):
-        for ship in self.get_ships():
+        self.reset_pole()
+        for num, ship in enumerate(self._ships):
+            positive = 1
+            negative = -1
+            go = choice([positive, negative])
+            print(f'GO_gen: {go}')
             if ship._tp == 1:
-                print(ship._x)
-                ship._x += ship.move(ship._x)
-                print('move:', ship._x)
-                return ship.set_start_coords(ship._x, ship._y)
+                flag_x = self.__check_go_perimetr(go, ship._x, self._size, ship._length)
+                if not self.__check_go_perimetr(go, ship._x, self._size, ship._length):
+                    go *= -1
+                else: go
+                print(f'_tp: {ship._tp} = {ship.build_ship_tuples(ship)}')
+                print(f'GO_check_perimetr: {go} | {flag_x}')
+
+                self._ships_move.append(Ship(
+                    ship._length,
+                    ship._tp,
+                    ship.move(go)[0],
+                    ship.move(go)[1],
+                ))
+
+                for i in self._ships_move:
+                    if i._tp == 1:
+                        print(f'__befor ln: {i._length} | tp: {i._tp} | ({i._x}, {i._y})')
+
+                if self._ships_move[num].__dict__['_x'] in range(0, self._size - 2):
+                    if go > 0:
+                        self._ships_move[num].__dict__['_x'] += go
+                    if go < 0:
+                        self._ships_move[num].__dict__['_x'] -= go
+                elif self._ships_move[num].__dict__['_x'] in range(1, self._size - 1):
+                    if go > 0:
+                        self._ships_move[num].__dict__['_x'] -= go
+                    if go < 0:
+                        self._ships_move[num].__dict__['_x'] += go
+
+                for i in self._ships_move:
+                    if i._tp == 1:
+                        print(f'__after ln: {i._length} | tp: {i._tp} | ({i._x}, {i._y})')
+
+                if not self.__check_collision_move():
+                    go *= -1
+                    self._ships_move[num].__dict__['_x'] += go
+                else: go
+                print(f'GO_check_collision: {go} | {self.__check_collision_move()}')
+
+                for i in self._ships_move:
+                    if i._tp == 1:
+                        print(f'__result ln: {i._length} | tp: {i._tp} | ({i._x}, {i._y})')
+
+                for i in range(ship._length):
+                    for y, x in [ship.move(go)]:
+                        self._pole[x][y + i] = next(ship._cells_move_iter)
+                        contour = Ship.contour([(y + i, x)])
+                        self.__fill_contour(contour)
+                        print(f'({y + i}, {x})')
+                print('-' * 20)
+
             if ship._tp == 2:
-                print(ship._y)
-                ship._y += ship.move(ship._y)
-                print('move:', ship._y)
-                return ship.set_start_coords(ship._x, ship._y)
+                flag_y = self.__check_go_perimetr(go, ship._y, self._size, ship._length)
+                if not self.__check_go_perimetr(go, ship._y, self._size, ship._length):
+                    go *= -1
+                else: go
+                print(f'_tp: {ship._tp} = {ship.build_ship_tuples(ship)}')
+                print(f'GO_check_perimetr: {go} | {flag_y}')
+
+                self._ships_move.append(Ship(
+                    ship._length,
+                    ship._tp,
+                    ship.move(go)[0],
+                    ship.move(go)[1],
+                ))
+
+                if self._ships_move[num].__dict__['_y'] in range(0, self._size - 2):
+                    if go > 0:
+                        self._ships_move[num].__dict__['_y'] += go
+                    if go < 0:
+                        self._ships_move[num].__dict__['_y'] -= go
+                elif self._ships_move[num].__dict__['_y'] in range(1, self._size - 1):
+                    if go > 0:
+                        self._ships_move[num].__dict__['_y'] -= go
+                    if go < 0:
+                        self._ships_move[num].__dict__['_y'] += go
+
+                if not self.__check_collision_move():
+                    go *= -1
+                    self._ships_move[num].__dict__['_y'] += go
+                else: go
+                print(f'GO_check_collision: {go} | {self.__check_collision_move()}')
+
+                for i in range(ship._length):
+                    for y, x in [ship.move(go)]:
+                        self._pole[x + i][y] = next(ship._cells_move_iter)
+                        contour = Ship.contour([(y, x + i)])
+                        self.__fill_contour(contour)
+                        print(f'({y}, {x + i})')
+                print('-' * 20)
 
     def show(self):
         for line in self._pole:
@@ -241,18 +374,23 @@ SIZE_GAME_POLE = 10
 
 pole = GamePole(SIZE_GAME_POLE)
 pole.init()
-# print()
 pole.show()
 pole.move_ships()
-print()
 pole.show()
 
-print('-' * 30)
-print('busy cells: ', len(pole._busy_cells))
-print(pole._busy_cells)
+# print('-' * 30)
+# print('busy cells: ', len(pole._busy_cells))
+# print(pole._busy_cells)
 
 print('-' * 30)
+print('ships:')
 for num, i in enumerate(pole.get_ships()):
+    print(f'- {num+1} ln: {i._length} | tp: {i._tp} | ({i._x}, {i._y}) | '
+          f'cells: {i._cells} | move: {i._is_move}')
+
+print('-' * 30)
+print('ships move:')
+for num, i in enumerate(pole.get_ships_move()):
     print(f'- {num+1} ln: {i._length} | tp: {i._tp} | ({i._x}, {i._y}) | '
           f'cells: {i._cells} | move: {i._is_move}')
 
