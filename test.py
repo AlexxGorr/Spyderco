@@ -1,6 +1,15 @@
 from random import randint, choice
 import sys
-sys.setrecursionlimit(500)
+sys.setrecursionlimit(2000)
+
+
+class GameException(Exception):
+    pass
+
+
+class InitialException(GameException):
+    def __str__(self):
+        return 'Generate error!'
 
 
 class Ship:
@@ -17,9 +26,9 @@ class Ship:
         ##########################################################
         self._cells = [i+1 for i in range(length)]
         self._cells_iter = iter(self._cells)
-        self._cells_move_iter = iter(self._cells)
         # self._cells[1] = self.MARK_CELL_KILL
         ##########################################################
+        self._cells_move_iter = iter(self._cells)
         self._is_move = False if any(map(lambda x: x == self.MARK_CELL_KILL, self._cells)) else True
 
     def set_start_coords(self, x, y):
@@ -48,7 +57,6 @@ class Ship:
             for dx, dy in contour:
                 cell_contour = i + dx, j + dy
                 result.append(cell_contour)
-        # print('__contour:', result)
         return result
 
     @staticmethod
@@ -65,18 +73,6 @@ class Ship:
         return result
 
     def is_collide(self, ship):
-        # if isinstance(ship, Ship):
-        #     if not (self._x + self._length < ship._x,
-        #             ship._x + ship._length < self._x,
-        #             self._y + self._length < ship._y,
-        #             ship._y + ship._length < self._y,
-        #             self._x != ship._x,
-        #             self._y != ship._y,
-        #             ship._x != self._x,
-        #             ship._y != self._y):
-        #         return True
-        #     return False
-        #####################################################
         ship_1 = self.build_ship_tuples(self)
         ship_2 = self.build_ship_tuples(ship)
         result = set(ship_1) & set(self.contour(ship_2))
@@ -117,8 +113,8 @@ class GamePole:
             Ship(4, tp=randint(1, 2)),
             Ship(3, tp=randint(1, 2)),
             Ship(3, tp=randint(1, 2)),
-            # Ship(2, tp=randint(1, 2)),
-            # Ship(2, tp=randint(1, 2)),
+            Ship(2, tp=randint(1, 2)),
+            Ship(2, tp=randint(1, 2)),
             # Ship(2, tp=randint(1, 2)),
             # Ship(1, tp=randint(1, 2)),
             # Ship(1, tp=randint(1, 2)),
@@ -135,7 +131,7 @@ class GamePole:
         for ship in self._ships:
             self.__is_perimetr_ships(ship)
 
-        if not self.__check_collision():
+        if not self.__check_collision(self._ships):
             self.show()
             print()
             self._ships = []
@@ -143,24 +139,28 @@ class GamePole:
             self.reset_pole()
             self.init()
 
-    def __check_collision(self):
+    @staticmethod
+    def __check_collision(ships):
         count = 0
-        if len(self._ships) < 2:
+        if len(ships) < 2:
             return True
-        for i in range(len(self._ships)):
-            for j in range(len(self._ships)):
+        for i in range(len(ships)):
+            for j in range(len(ships)):
                 if i != j:
                     # print(f'check: {i+1} - {j+1}')
-                    if self._ships[i].is_collide(self._ships[j]):
-                        print(f'Collide! '
-                              f'{i+1}: ({self._ships[i]._x}, '
-                              f'{self._ships[i]._y}) ln:{self._ships[i]._length} | '
-                              f'{j+1}: ({self._ships[j]._x}, '
-                              f'{self._ships[j]._y}) ln:{self._ships[j]._length}')
+                    if ships[i].is_collide(ships[j]):
+                        print(f'is collide: '
+                              f'{i + 1}: ({ships[i]._x}, '
+                              f'{ships[i]._y}) ln:{ships[i]._length} | '
+                              f'{j + 1}: ({ships[j]._x}, '
+                              f'{ships[j]._y}) ln:{ships[j]._length}')
                         count += 1
                         print('-' * 30)
-        print()
-        print('- count collisions:', count)
+        if count > 0:
+            print()
+            print('- count collisions:', count)
+        else:
+            print('- generate OK!')
         print('-' * 30)
         if count > 0:
             return False
@@ -241,24 +241,6 @@ class GamePole:
             return False
         return True
 
-    def __check_collision_move(self):
-        if len(self._ships_move) < 2:
-            return True
-        # for num, i in enumerate(self._ships_move):
-        #     print(f'_{num+1}__ship: ({i._x}, {i._y})')
-        for i in range(len(self._ships_move)):
-            for j in range(len(self._ships_move)):
-                if i != j:
-                    if self._ships_move[i].is_collide(self._ships_move[j]):
-                        print(f'Collide! '
-                              f'{i + 1}: ({self._ships_move[i]._x}, '
-                              f'{self._ships_move[i]._y}) ln:{self._ships_move[i]._length} | '
-                              f'{j + 1}: ({self._ships_move[j]._x}, '
-                              f'{self._ships_move[j]._y}) ln:{self._ships_move[j]._length}')
-                        return False
-                    return True
-
-    # метод перезаписывает коллекцию self._pole
     def move_ships(self):
         self.reset_pole()
         for num, ship in enumerate(self._ships):
@@ -268,7 +250,7 @@ class GamePole:
             print(f'GO_gen: {go}')
             if ship._tp == 1:
                 flag_x = self.__check_go_perimetr(go, ship._x, self._size, ship._length)
-                if not self.__check_go_perimetr(go, ship._x, self._size, ship._length):
+                if not flag_x:
                     go *= -1
                 else: go
                 print(f'_tp: {ship._tp} = {ship.build_ship_tuples(ship)}')
@@ -281,34 +263,14 @@ class GamePole:
                     ship.move(go)[1],
                 ))
 
-                for i in self._ships_move:
-                    if i._tp == 1:
-                        print(f'__befor ln: {i._length} | tp: {i._tp} | ({i._x}, {i._y})')
-
-                if self._ships_move[num].__dict__['_x'] in range(0, self._size - 2):
-                    if go > 0:
-                        self._ships_move[num].__dict__['_x'] += go
-                    if go < 0:
-                        self._ships_move[num].__dict__['_x'] -= go
-                elif self._ships_move[num].__dict__['_x'] in range(1, self._size - 1):
-                    if go > 0:
-                        self._ships_move[num].__dict__['_x'] -= go
-                    if go < 0:
-                        self._ships_move[num].__dict__['_x'] += go
-
-                for i in self._ships_move:
-                    if i._tp == 1:
-                        print(f'__after ln: {i._length} | tp: {i._tp} | ({i._x}, {i._y})')
-
-                if not self.__check_collision_move():
+                if not self.__check_collision(self._ships_move):
                     go *= -1
-                    self._ships_move[num].__dict__['_x'] += go
+                    if self._ships_move[num].__dict__['_x'] + go \
+                            in range(0, self._size - self._ships_move[num]._length - 1):
+                        self._ships_move[num].__dict__['_x'] += go
+                    else: go = 0
                 else: go
-                print(f'GO_check_collision: {go} | {self.__check_collision_move()}')
-
-                for i in self._ships_move:
-                    if i._tp == 1:
-                        print(f'__result ln: {i._length} | tp: {i._tp} | ({i._x}, {i._y})')
+                print(f'GO_check_collision: {go} | {self.__check_collision(self._ships_move)}')
 
                 for i in range(ship._length):
                     for y, x in [ship.move(go)]:
@@ -320,7 +282,7 @@ class GamePole:
 
             if ship._tp == 2:
                 flag_y = self.__check_go_perimetr(go, ship._y, self._size, ship._length)
-                if not self.__check_go_perimetr(go, ship._y, self._size, ship._length):
+                if not flag_y:
                     go *= -1
                 else: go
                 print(f'_tp: {ship._tp} = {ship.build_ship_tuples(ship)}')
@@ -333,22 +295,14 @@ class GamePole:
                     ship.move(go)[1],
                 ))
 
-                if self._ships_move[num].__dict__['_y'] in range(0, self._size - 2):
-                    if go > 0:
-                        self._ships_move[num].__dict__['_y'] += go
-                    if go < 0:
-                        self._ships_move[num].__dict__['_y'] -= go
-                elif self._ships_move[num].__dict__['_y'] in range(1, self._size - 1):
-                    if go > 0:
-                        self._ships_move[num].__dict__['_y'] -= go
-                    if go < 0:
-                        self._ships_move[num].__dict__['_y'] += go
-
-                if not self.__check_collision_move():
+                if not self.__check_collision(self._ships_move):
                     go *= -1
-                    self._ships_move[num].__dict__['_y'] += go
+                    if self._ships_move[num].__dict__['_y'] + go \
+                            in range(0, self._size - self._ships_move[num]._length - 1):
+                        self._ships_move[num].__dict__['_y'] += go
+                    else: go = 0
                 else: go
-                print(f'GO_check_collision: {go} | {self.__check_collision_move()}')
+                print(f'GO_check_collision: {go} | {self.__check_collision(self._ships_move)}')
 
                 for i in range(ship._length):
                     for y, x in [ship.move(go)]:
@@ -393,7 +347,6 @@ print('ships move:')
 for num, i in enumerate(pole.get_ships_move()):
     print(f'- {num+1} ln: {i._length} | tp: {i._tp} | ({i._x}, {i._y}) | '
           f'cells: {i._cells} | move: {i._is_move}')
-
 
 
 
