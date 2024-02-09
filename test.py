@@ -21,7 +21,7 @@ class Ship:
         self._y: int = y
         # self._cells = [self.MARK_CELL for _ in range(length)]
         ##########################################################
-        self._cells = [i+1 for i in range(length)]
+        self._cells = [i + 1 for i in range(length)]
         # self._cells[0] = self.MARK_CELL_KILL
         ##########################################################
         self._is_move = False if any(map(lambda x: x == self.MARK_CELL_KILL, self._cells)) else True
@@ -45,7 +45,7 @@ class Ship:
     def contour(cell) -> list:
         contour = [
             (-1, -1), (-1, 0), (-1, 1),
-            (0, -1), (0, 1),
+            (0, -1), (0, 0), (0, 1),
             (1, -1), (1, 0), (1, 1),
         ]
         result = []
@@ -55,27 +55,20 @@ class Ship:
                 result.append(cell_contour)
         return result
 
-    @staticmethod
-    def build_ship_tuples(ship) -> list:
+    def build_ship_tuples(self) -> list:
         result = []
-        if ship._tp == 1:
-            for i in range(ship._length):
-                for x, y in [(ship._x, ship._y)]:
-                    result.append((x+i, y))
-        if ship._tp == 2:
-            for i in range(ship._length):
-                for x, y in [(ship._x, ship._y)]:
-                    result.append((x, y+i))
+        for i in range(self._length):
+            if self._tp == 1:
+                result.append((self._x + i, self._y))
+            if self._tp == 2:
+                result.append((self._x, self._y + i))
         return result
 
     def is_collide(self, ship) -> bool:
-        ship_1 = self.build_ship_tuples(self)
-        ship_2 = self.build_ship_tuples(ship)
-        ######################################################
+        ship_1 = self.build_ship_tuples()
+        ship_2 = ship.build_ship_tuples()
         result = set(ship_1) & set(self.contour(ship_2))
         return len(result) > 0
-        ######################################################
-        # return not set(ship_1).isdisjoint(set(self.contour(ship_2)))
 
     def is_out_pole(self, size) -> bool:
         if self._tp == 1:
@@ -101,106 +94,35 @@ class GamePole:
         self._pole = [[self.MARK_WATER for _ in range(size)] for _ in range(size)]
 
     def __build_ships_stek(self):
-        # ships_collection = [
-        #     Ship(4, tp=randint(1, 2)),
-        #     Ship(3, tp=randint(1, 2)),
-        #     Ship(3, tp=randint(1, 2)),
-        #     Ship(2, tp=randint(1, 2)),
-        #     Ship(2, tp=randint(1, 2)),
-        #     Ship(2, tp=randint(1, 2)),
-        #     Ship(1, tp=randint(1, 2)),
-        #     Ship(1, tp=randint(1, 2)),
-        #     Ship(1, tp=randint(1, 2)),
-        #     Ship(1, tp=randint(1, 2)),
-        # ]
-        # for ship in ships_collection:
-        #     self._ships.append(ship)
-        ###############################################
+        ships_collection = []
         deck = 4
-        var = [(i+1, j) for i, j in enumerate(range(deck, 0, -1))]
+        var = [(i + 1, j) for i, j in enumerate(range(deck, 0, -1))]
         for a, b in var:
             for _ in range(b):
                 ship = Ship(a, tp=randint(1, 2))
-                self._ships.append(ship)
-        self._ships.reverse()
+                ships_collection.append(ship)
+        ships_collection.reverse()
+        return ships_collection
 
     def init(self):
-        self.__build_ships_stek()
-        self.__get_correction(self._ships)
-        self.__draw_position()
+        self.__install()
+        self.__draw_pole()
 
-    def __get_correction(self, ships):
-        collision = False
-        out = False
-        while not (out or collision):
-            for ship in ships:
-                self.__generate_ship(ship)
-            collision = self.__check_collision(ships)
-            out = self.__check_out(ships)
-
-    def __check_collision(self, ships):
-        for ship in ships:
-            result = any([check_ship.is_collide(ship) for check_ship in ships if ship != check_ship])
-            if result:
-                return False
-        return True
-
-    def __check_out(self, ships):
-        # result = all([ship.is_out_pole(self._size) for ship in ships])
-        # if result:
-        #     return True
-        # return False
-        #################################################
-        for ship in ships:
-            if not ship.is_out_pole(self._size):
-                return False
-        return True
-
-    def __generate_ship(self, ship):
-        if ship._tp == 1:
-            ship.set_start_coords(
-                randint(0, self._size - 1 - ship._length),
-                randint(0, self._size - 1)
-            )
-        if ship._tp == 2:
-            ship.set_start_coords(
-                randint(0, self._size - 1),
-                randint(0, self._size - 1 - ship._length)
-            )
-
-    def __draw_position(self):
-        for ship in self._ships:
-            cell = 0
-            start_coord = ship.get_start_coords()
-            x = start_coord[0]
-            y = start_coord[1]
-            if ship._tp == 1:
-                for i in range(x, x + ship._length):
-                    for j in range(y, y + 1):
-                        self.__fill_position(i, j, ship._cells[cell])
-                        cell += 1
-            if ship._tp == 2:
-                for i in range(x, x + 1):
-                    for j in range(y, y + ship._length):
-                        self.__fill_position(i, j, ship._cells[cell])
-                        cell += 1
-
-    def __fill_position(self, i, j, cell):
-        self._pole[j][i] = cell
-        contour = Ship.contour([(i, j)])
-        self.__fill_contour(contour)
-
-    def __fill_contour(self, contour, verbose_contour=False):
-        for b, a in contour:
-            if a in range(0, self._size) and b in range(0, self._size):
-                if self._pole[a][b] == self.MARK_WATER:
-                    if verbose_contour:
-                        self._pole[a][b] = self.MARK_CONTOUR
-                    else:
-                        self._pole[a][b] = self.MARK_WATER
+    def __install(self):
+        for ship in self.__build_ships_stek():
+            while True:
+                ship.set_start_coords(
+                    randint(0, self._size - 1),
+                    randint(0, self._size - 1)
+                )
+                if not ship.is_out_pole(self._size):
+                    result = any([check_ship.is_collide(ship) for check_ship in self._ships])
+                    if not result:
+                        self._ships.append(ship)
+                        break
 
     def get_ships(self):
-        return [x for x in self._ships]
+        return self._ships
 
     def get_ships_move(self):
         return [x for x in self._ships_ghost]
@@ -309,7 +231,34 @@ class GamePole:
                         contour = Ship.contour([(y, x + i)])
                         self.__fill_contour(contour)
 
+    def __draw_pole(self):
+        for ship in self._ships:
+            start_coord = ship.get_start_coords()
+            x = start_coord[0]
+            y = start_coord[1]
+            if ship._tp == 1:
+                for i in range(ship._length):
+                    self.__fill_position(x + i, y, ship._cells[i])
+            if ship._tp == 2:
+                for i in range(ship._length):
+                    self.__fill_position(x, y + i, ship._cells[i])
+
+    def __fill_position(self, x, y, cell):
+        self._pole[y][x] = cell
+        contour = Ship.contour([(x, y)])
+        self.__fill_contour(contour)
+
+    def __fill_contour(self, contour, verbose_contour=False):
+        for b, a in contour:
+            if a in range(0, self._size) and b in range(0, self._size):
+                if self._pole[a][b] == self.MARK_WATER:
+                    if verbose_contour:
+                        self._pole[a][b] = self.MARK_CONTOUR
+                    else:
+                        self._pole[a][b] = self.MARK_WATER
+
     def show(self):
+        # self.__draw_pole()
         abc = list(map(lambda x: x, ascii_lowercase))
         print('  ', ' '.join([abc[x] for x in range(self._size)]))
         print('  ', ' '.join([str(x) for x in range(self._size)]))
